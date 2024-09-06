@@ -95,6 +95,7 @@ extern "C" {
 /* cpi/resolution range */
 #define PMW3610_MAX_CPI 3200
 #define PMW3610_MIN_CPI 200
+#define CPI_STEP 200
 
 /* write command bit position */
 #define SPI_WRITE_BIT BIT(7)
