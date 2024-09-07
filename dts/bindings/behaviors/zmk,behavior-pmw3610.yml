@@ -5,6 +5,9 @@ compatible: "zmk,behavior-pmw3610"
 include: zero_param.yaml
 
 properties:
+  pixart_dev:
+    type: phandle
+    required: true
   increase_cpi:
     type: boolean
   decrease_cpi:

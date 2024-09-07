@@ -13,9 +13,14 @@
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 struct behavior_cpi_config {
+    const struct device *pixart_dev;
     bool increase_cpi;
     bool decrease_cpi;
 };
+
+
+
+
 
 static int behavior_cpi_init(const struct device *dev) { 
     return 0; 
@@ -31,8 +36,9 @@ static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
     }
 
     const struct behavior_cpi_config *cfg = dev->config;
-
-    struct pixart_data *data = dev->data;
+    const struct device *pixart_dev = cfg->pixart_dev;
+    struct pixart_data *data = pixart_dev->data;
+    
     if (!data) {
         LOG_ERR("Failed to get pixart_data.");
         return -ENODEV;
@@ -71,7 +77,8 @@ static const struct behavior_driver_api behavior_cpi_driver_api = {
 };
 
 #define CPI_INST(n)                                                                                \
-    static struct behavior_cpi_config behavior_cpi_config_##n = {                                   \
+    static struct behavior_cpi_config behavior_cpi_config_##n = {   
+        .pixart_dev = DEVICE_DT_GET(DT_INST_PHANDLE(n, pixart_dev)),                                \
         .increase_cpi = DT_INST_PROP(n, increase_cpi),                                              \
         .decrease_cpi = DT_INST_PROP(n, decrease_cpi),                                              \
     };                                                                                             \
