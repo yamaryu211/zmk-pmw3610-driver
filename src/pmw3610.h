@@ -7,6 +7,9 @@
 extern "C" {
 #endif
 
+int increase_cpi(const struct device *dev);
+int decrease_cpi(const struct device *dev);
+
 /* Timings (in us) used in SPI communication. Since MCU should not do other tasks during wait,
  * k_busy_wait is used instead of k_sleep */
 // - sub-us time is rounded to us, due to the limitation of k_busy_wait, see :
