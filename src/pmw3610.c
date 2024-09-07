@@ -327,6 +327,33 @@ static int set_cpi_if_needed(const struct device *dev, uint32_t cpi) {
     return 0;
 }
 
+/* */
+static int increase_cpi(const struct device *dev) {
+    struct pixart_data *data = dev->data;
+    uint32_t new_cpi = data->curr_cpi + CPI_STEP;
+
+    // 設定可能な範囲を超えないか確認
+    if (new_cpi > PMW3610_MAX_CPI) {
+        LOG_WRN("CPI is already at the maximum value (%u).", PMW3610_MAX_CPI);
+        return -EINVAL;
+    }
+
+    return set_cpi_if_needed(dev, new_cpi);
+}
+
+static int decrease_cpi(const struct device *dev) {
+    struct pixart_data *data = dev->data;
+    uint32_t new_cpi = data->curr_cpi - CPI_STEP;
+
+    // 設定可能な範囲を超えないか確認
+    if (new_cpi < PMW3610_MIN_CPI) {
+        LOG_WRN("CPI is already at the minimum value (%u).", PMW3610_MIN_CPI);
+        return -EINVAL;
+    }
+
+    return set_cpi_if_needed(dev, new_cpi);
+}
+
 /* Set sampling rate in each mode (in ms) */
 static int set_sample_time(const struct device *dev, uint8_t reg_addr, uint32_t sample_time) {
     uint32_t maxtime = 2550;

@@ -1,0 +1,11 @@
+description: pmw3610 behavior
+
+compatible: "zmk,behavior-pmw3610"
+
+include: zero_param.yaml
+
+properties:
+  increase_cpi:
+    type: boolean
+  decrease_cpi:
+    type: boolean

@@ -1,12 +1,12 @@
 / {
     behaviors {
         /omit-if-no-ref/ cpi_i200: cpi_i200 {
-            compatible = "pixart,pmw3610";
+            compatible = "zmk,behavior-pmw3610";
             #binding-cells = <0>;
             increase_cpi;
         };
         /omit-if-no-ref/ cpi_d200: cpi_d200 {
-            compatible = "pixart,pmw3610";
+            compatible = "zmk,behavior-pmw3610";
             #binding-cells = <0>;
             decrease_cpi;
 
