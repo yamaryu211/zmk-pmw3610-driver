@@ -23,7 +23,7 @@ static int behavior_cpi_init(const struct device *dev) {
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
                                         
-    const struct device *dev = zmk_behavior_get_device(binding);
+    const struct device *dev = binding->behavior_dev;
     if (!dev) {
         LOG_ERR("Failed to get device.");
         return -ENODEV;
