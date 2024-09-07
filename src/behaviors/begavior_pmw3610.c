@@ -4,9 +4,10 @@
 #include <drivers/behavior.h>
 #include <zephyr/logging/log.h>
 
-#include <zmk/event_manager.h>
-#include <zmk/events/keycode_state_changed.h>
 #include <zmk/behavior.h>
+#include <zmk/hid.h>
+#include <zephyr/input/input.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 #include "../pmw3610.h"
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -23,7 +24,7 @@ static int behavior_cpi_init(const struct device *dev) {
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
                                         
-    const struct device *dev = binding->behavior_dev;
+     const struct device *dev = zmk_behavior_get_binding(binding->behavior_dev);
     if (!dev) {
         LOG_ERR("Failed to get device.");
         return -ENODEV;
