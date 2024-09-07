@@ -22,17 +22,18 @@ static int behavior_cpi_init(const struct device *dev) {
 
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
+                                        
+    const struct device *dev = zmk_behavior_get_device(binding);
+    if (!dev) {
+        LOG_ERR("Failed to get device.");
+        return -ENODEV;
+    }
+
     const struct behavior_cpi_config *cfg = dev->config;
 
     struct pixart_data *data = dev->data;
     if (!data) {
         LOG_ERR("Failed to get pixart_data.");
-        return -ENODEV;
-    }
-
-    const struct device *dev = data->dev;
-    if (!dev) {
-        LOG_ERR("Failed to get pixart device binding.");
         return -ENODEV;
     }
 
