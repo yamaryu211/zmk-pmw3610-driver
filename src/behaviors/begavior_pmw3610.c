@@ -83,7 +83,7 @@ static const struct behavior_driver_api behavior_cpi_driver_api = {
         .decrease_cpi = DT_INST_PROP(n, decrease_cpi),                                              \
     };                                                                                             \
     BEHAVIOR_DT_INST_DEFINE(n, behavior_cpi_init, NULL, NULL, &behavior_cpi_config_##n,            \
-                            POST_KERNEL, 34,                      \
+                            POST_KERNEL, ZMK_BEHAVIOR_PMW3610_PRIORITY,                      \
                             &behavior_cpi_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(CPI_INST)
