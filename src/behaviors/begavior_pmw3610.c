@@ -47,14 +47,14 @@ static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
     // CPIを増加または減少させる処理
     if (cfg->increase_cpi) {
         // CPIを200増加
-        if (increase_cpi(dev) != 0) {
+        if (increase_cpi(pixart_dev) != 0) {
             LOG_ERR("Failed to increase CPI.");
         }
     }
 
     if (cfg->decrease_cpi) {
         // CPIを200減少
-        if (decrease_cpi(dev) != 0) {
+        if (decrease_cpi(pixart_dev) != 0) {
             LOG_ERR("Failed to decrease CPI.");
         }
     }
