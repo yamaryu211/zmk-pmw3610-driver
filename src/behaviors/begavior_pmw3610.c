@@ -76,6 +76,8 @@ static const struct behavior_driver_api behavior_cpi_driver_api = {
 #endif
 };
 
+#define ZMK_BEHAVIOR_PMW3610_PRIORITY 91
+
 #define CPI_INST(n)                                                                                \
     static struct behavior_cpi_config behavior_cpi_config_##n = {                                   \  
         .pixart_dev = DEVICE_DT_GET(DT_INST_PHANDLE(n, pixart_dev)),                                \
