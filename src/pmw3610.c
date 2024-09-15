@@ -313,6 +313,15 @@ static int set_cpi(const struct device *dev, uint32_t cpi) {
         return err;
     }
 
+    // 変更後のCPIを読み取る
+    uint8_t read_value;
+    err = reg_read(dev, PMW3610_REG_RES_STEP, &read_value);
+    LOG_INF("Read back CPI register value: 0x%x (expected 0x%x)", read_value, value);
+    if (err || read_value != value) {
+        LOG_ERR("CPI value not updated correctly");
+        return -EIO;
+    }
+
     struct pixart_data *dev_data = dev->data;
     dev_data->curr_cpi = cpi;
 
