@@ -99,20 +99,20 @@ CONFIG_ZMK_MOUSE=y
 CONFIG_PMW3610=y
 ```
 
-enable the behavior in your `.keymap` file:
+then enable the behaviors for change cpi in your `.keymap` file:
 ```
-    behaviors {        
-        cpi_i200: cpi_i200 {
-            compatible = "zmk,behavior-pmw3610";
-            #binding-cells = <0>;
-            pixart_dev = <&trackball>;
-            increase_cpi;
-        };
-        cpi_d200: cpi_d200 {
-            compatible = "zmk,behavior-pmw3610";
-            #binding-cells = <0>;
-            pixart_dev = <&trackball>;
-            decrease_cpi;
-        };
+behaviors {        
+    cpi_i200: cpi_i200 {
+        compatible = "zmk,behavior-pmw3610";
+        #binding-cells = <0>;
+        pixart_dev = <&trackball>;
+        increase_cpi;
     };
+    cpi_d200: cpi_d200 {
+        compatible = "zmk,behavior-pmw3610";
+        #binding-cells = <0>;
+        pixart_dev = <&trackball>;
+        decrease_cpi;
+    };
+};
 ```
