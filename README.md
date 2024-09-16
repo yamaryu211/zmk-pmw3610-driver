@@ -13,16 +13,16 @@ manifest:
   remotes:
     - name: zmkfirmware
       url-base: https://github.com/petejohanson
-    - name: inorichi
-      url-base: https://github.com/inorichi
+    - name: kumamuk-git
+      url-base: https://github.com/kumamuk-git
   projects:
     - name: zmk
       remote: zmkfirmware
       revision: feat/pointers-move-scroll
       import: app/west.yml
     - name: zmk-pmw3610-driver
-      remote: inorichi
-      revision: main
+      remote: kumamuk-git
+      revision: change-cpi
   self:
     path: config
 ```
@@ -97,4 +97,22 @@ CONFIG_SPI=y
 CONFIG_INPUT=y
 CONFIG_ZMK_MOUSE=y
 CONFIG_PMW3610=y
+```
+
+enable the behavior in your `.keymap` file:
+```
+    behaviors {        
+        cpi_i200: cpi_i200 {
+            compatible = "zmk,behavior-pmw3610";
+            #binding-cells = <0>;
+            pixart_dev = <&trackball>;
+            increase_cpi;
+        };
+        cpi_d200: cpi_d200 {
+            compatible = "zmk,behavior-pmw3610";
+            #binding-cells = <0>;
+            pixart_dev = <&trackball>;
+            decrease_cpi;
+        };
+    };
 ```
