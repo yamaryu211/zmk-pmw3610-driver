@@ -692,7 +692,7 @@ static int pmw3610_report_data(const struct device *dev) {
         if (input_mode != SCROLL) {
             
             /*massさんの参考*/
-            uint32_t cpi = dev_data->curr_cpi;
+            uint32_t cpi = dev->curr_cpi;
             int sign_x = (x>0) - (x<0);
             int sign_y = (y>0) - (y<0);
 
