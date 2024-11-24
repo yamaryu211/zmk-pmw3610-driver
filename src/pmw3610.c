@@ -698,12 +698,12 @@ static int pmw3610_report_data(const struct device *dev) {
 
             float speed_adjust = 1;
             x = pow(fabs(x),speed_adjust) / (pow(cpi/3,speed_adjust)) * cpi /3 * sign_x;
-            x = pow(fabs(x),speed_adjust) / (pow(cpi/3,speed_adjust)) * cpi /3 * sign_x;
+            y = pow(fabs(y),speed_adjust) / (pow(cpi/3,speed_adjust)) * cpi /3 * sign_y;
             /*ここまで*/
             
             input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
             input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
-            
+
         } else {
             data->scroll_delta_x += x;
             data->scroll_delta_y += y;
