@@ -594,6 +594,7 @@ static int pmw3610_report_data(const struct device *dev) {
         set_cpi_if_needed(dev, CONFIG_PMW3610_CPI);
         dividor = CONFIG_PMW3610_CPI_DIVIDOR;
         break;
+
     case SCROLL:
         set_cpi_if_needed(dev, CONFIG_PMW3610_CPI);
         if (input_mode_changed) {
@@ -689,8 +690,20 @@ static int pmw3610_report_data(const struct device *dev) {
 
     if (x != 0 || y != 0) {
         if (input_mode != SCROLL) {
+            
+            /*massさんの参考*/
+            uint32_t cpi = dev_data->curr_cpi;
+            int sign_x = (x>0) - (x<0);
+            int sign_y = (y>0) - (y<0);
+
+            float speed_adjust = 1;
+            x = pow(fabs(x),speed_adjust) / (pow(cpi/3,speed_adjust)) * cpi /3 * sign_x;
+            x = pow(fabs(x),speed_adjust) / (pow(cpi/3,speed_adjust)) * cpi /3 * sign_x;
+            /*ここまで*/
+            
             input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
             input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
+            
         } else {
             data->scroll_delta_x += x;
             data->scroll_delta_y += y;
