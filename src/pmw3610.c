@@ -571,6 +571,7 @@ static void deactivate_automouse_layer(struct k_timer *timer) {
 K_TIMER_DEFINE(automouse_layer_timer, deactivate_automouse_layer, NULL);
 #endif
 
+int ball_action_idx = -1;
 static enum pixart_input_mode get_input_mode_for_current_layer(const struct device *dev) {
     const struct pixart_config *config = dev->config;
     uint8_t curr_layer = zmk_keymap_highest_layer_active();
@@ -587,6 +588,7 @@ static enum pixart_input_mode get_input_mode_for_current_layer(const struct devi
     for (size_t i = 0; i < config->ball_actions_len; i++) {
         for (size_t j = 0; j < config->ball_actions[i]->layers_len; j++) {
             if (curr_layer == config->ball_actions[i]->layers[j]) {
+                ball_action_idx = i;
                 return BALL_ACTION;
             }
         }
@@ -748,41 +750,34 @@ static int pmw3610_report_data(const struct device *dev) {
 
             const struct pixart_config *config = dev->config;
 
-            for (int i = 0; i < config->ball_actions_len; i++) {
-                const struct ball_action_cfg action_cfg = *config->ball_actions[i];
-                const uint8_t current_layer = zmk_keymap_highest_layer_active();
+            if(ball_action_idx != -1) {
+                const struct ball_action_cfg action_cfg = *config->ball_actions[ball_action_idx];
 
-                for (int j = 0; j < action_cfg.layers_len; j++) {
-                    if (current_layer == action_cfg.layers[j]) {
-                        LOG_DBG("invoking ball action [%d], layer=%d", i, current_layer);
+                LOG_DBG("invoking ball action [%d], layer=%d", ball_action_idx, zmk_keymap_highest_layer_active());
 
-                        struct zmk_behavior_binding_event event = {
-                            .position = INT32_MAX,
-                            .timestamp = k_uptime_get(),
-        #if IS_ENABLED(CONFIG_ZMK_SPLIT)
-                            .source = ZMK_POSITION_STATE_CHANGE_SOURCE_LOCAL,
-        #endif
+                struct zmk_behavior_binding_event event = {
+                    .position = INT32_MAX,
+                    .timestamp = k_uptime_get(),
+#if IS_ENABLED(CONFIG_ZMK_SPLIT)
+                    .source = ZMK_POSITION_STATE_CHANGE_SOURCE_LOCAL,
+#endif
 
-                        };
+                };
 
-                        // determine which binding to invoke
-                        int idx = -1;
-                        if(abs(data->ball_action_delta_x) > action_cfg.tick) {
-                            idx = data->ball_action_delta_x > 0 ? 0 : 1;
-                        } else if(abs(data->ball_action_delta_y) > action_cfg.tick) {
-                            idx = data->ball_action_delta_y > 0 ? 3 : 2;
-                        }
+                // determine which binding to invoke
+                int idx = -1;
+                if(abs(data->ball_action_delta_x) > action_cfg.tick) {
+                    idx = data->ball_action_delta_x > 0 ? 0 : 1;
+                } else if(abs(data->ball_action_delta_y) > action_cfg.tick) {
+                    idx = data->ball_action_delta_y > 0 ? 3 : 2;
+                }
 
-                        if(idx != -1) {
-                            zmk_behavior_queue_add(&event, action_cfg.bindings[idx], true, action_cfg.tap_ms);
-                            zmk_behavior_queue_add(&event, action_cfg.bindings[idx], false, action_cfg.wait_ms);
+                if(idx != -1) {
+                    zmk_behavior_queue_add(&event, action_cfg.bindings[idx], true, action_cfg.tap_ms);
+                    zmk_behavior_queue_add(&event, action_cfg.bindings[idx], false, action_cfg.wait_ms);
 
-                            data->ball_action_delta_x = 0;
-                            data->ball_action_delta_y = 0;
-                        }
-
-                        break;
-                    }
+                    data->ball_action_delta_x = 0;
+                    data->ball_action_delta_y = 0;
                 }
             }
         }
