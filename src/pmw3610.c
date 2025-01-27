@@ -637,8 +637,8 @@ static int pmw3610_report_data(const struct device *dev) {
 
     data->curr_mode = input_mode;
 
-    int16_t x;
-    int16_t y;
+    int16_t x = 0;
+    int16_t y = 0;
 
 #if AUTOMOUSE_LAYER > 0
     if (input_mode == MOVE &&
