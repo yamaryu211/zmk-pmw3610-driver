@@ -767,15 +767,15 @@ static int pmw3610_report_data(const struct device *dev) {
 
                         // determine which binding to invoke
                         int idx = -1;
-                        if(abs(data->ball_action_delta_x) > CONFIG_PMW3610_BALL_ACTION_TICK) {
+                        if(abs(data->ball_action_delta_x) > action_cfg.tick) {
                             idx = data->ball_action_delta_x > 0 ? 0 : 1;
-                        } else if(abs(data->ball_action_delta_y) > CONFIG_PMW3610_BALL_ACTION_TICK) {
+                        } else if(abs(data->ball_action_delta_y) > action_cfg.tick) {
                             idx = data->ball_action_delta_y > 0 ? 3 : 2;
                         }
 
                         if(idx != -1) {
-                            zmk_behavior_queue_add(&event, action_cfg.bindings[idx], true, config->tap_ms);
-                            zmk_behavior_queue_add(&event, action_cfg.bindings[idx], false, config->wait_ms);
+                            zmk_behavior_queue_add(&event, action_cfg.bindings[idx], true, action_cfg.tap_ms);
+                            zmk_behavior_queue_add(&event, action_cfg.bindings[idx], false, action_cfg.wait_ms);
 
                             data->ball_action_delta_x = 0;
                             data->ball_action_delta_y = 0;
@@ -902,6 +902,9 @@ static int pmw3610_init(const struct device *dev) {
         .bindings = ball_action_config_##n##_bindings,                                             \
         .layers = DT_PROP(n, layers),                                                              \
         .layers_len = DT_PROP_LEN(n, layers),                                                      \
+        .tick = DT_PROP_OR(n, tick, CONFIG_PMW3610_BALL_ACTION_TICK),                         \
+        .wait_ms = DT_PROP_OR(n, wait_ms, CONFIG_ZMK_MACRO_DEFAULT_WAIT_MS),                            \
+        .tap_ms = DT_PROP_OR(n, tap_ms, CONFIG_ZMK_MACRO_DEFAULT_TAP_MS),                               \
     };
 
 
@@ -937,8 +940,6 @@ DT_INST_FOREACH_CHILD(0, BALL_ACTIONS_INST)
         .snipe_layers_len = DT_PROP_LEN(DT_DRV_INST(n), snipe_layers),                             \
         .ball_actions = ball_actions,                                                              \
         .ball_actions_len = BALL_ACTIONS_LEN,                                                      \
-        .tap_ms = DT_INST_PROP(n, tap_ms),                                                         \
-        .wait_ms = DT_INST_PROP(n, wait_ms),                                                       \
     };                                                                                             \
                                                                                                    \
     DEVICE_DT_INST_DEFINE(n, pmw3610_init, NULL, &data##n, &config##n, POST_KERNEL,                \

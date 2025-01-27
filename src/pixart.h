@@ -58,6 +58,9 @@ struct ball_action_cfg {
     struct zmk_behavior_binding *bindings;
     uint8_t layers[ZMK_KEYMAP_LAYERS_LEN];
     size_t layers_len;
+    uint32_t tick;
+    uint32_t wait_ms;
+    uint32_t tap_ms;
 };
 
 // device config data structure
@@ -71,8 +74,6 @@ struct pixart_config {
     int32_t *snipe_layers;
     struct ball_action_cfg **ball_actions;
     size_t ball_actions_len;
-    uint32_t tap_ms;
-    uint32_t wait_ms;
 };
 
 #ifdef __cplusplus

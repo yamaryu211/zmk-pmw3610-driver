@@ -36,3 +36,9 @@ child-binding:
     bindings:
       type: phandle-array
       required: true
+    tick:
+      type: int
+    wait-ms:
+      type: int
+    tap-ms:
+      type: int
