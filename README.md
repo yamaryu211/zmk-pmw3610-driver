@@ -90,8 +90,8 @@ Now, update your `board.overlay` adding the necessary bits (update the pins for 
         //
         //     /*   optional: ball action configuration  */
         //     tick = <10>;
-        //     wait-ms = <10>;
-        //     tap-ms = <10>;
+        //     wait-ms = <5>;
+        //     tap-ms = <5>;
         // };
     };
 };
