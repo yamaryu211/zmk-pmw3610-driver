@@ -1,5 +1,5 @@
 description: |
-  Sensor driver for the pixart PMW3610 mouse sensor 
+  Sensor driver for the pixart PMW3610 mouse sensor
 
 compatible: "pixart,pmw3610"
 
@@ -18,3 +18,21 @@ properties:
   automouse-layer:
     type: int
     default: -1
+  tap-ms:
+    type: int
+    description: Time to wait (in milliseconds) between the press and release events on a triggered listener behavior binding.
+    default: 5
+  wait-ms:
+    type: int
+    description: The default time to wait (in milliseconds) before triggering the next listener behavior binding.
+    default: 5
+
+child-binding:
+  description: "Keycodes to be sent when the track ball is moved"
+  properties:
+    layers:
+      type: array
+      required: true
+    bindings:
+      type: phandle-array
+      required: true
