@@ -898,9 +898,9 @@ static int pmw3610_init(const struct device *dev) {
         .bindings = ball_action_config_##n##_bindings,                                             \
         .layers = DT_PROP(n, layers),                                                              \
         .layers_len = DT_PROP_LEN(n, layers),                                                      \
-        .tick = DT_PROP_OR(n, tick, CONFIG_PMW3610_BALL_ACTION_TICK),                         \
-        .wait_ms = DT_PROP_OR(n, wait_ms, CONFIG_ZMK_MACRO_DEFAULT_WAIT_MS),                            \
-        .tap_ms = DT_PROP_OR(n, tap_ms, CONFIG_ZMK_MACRO_DEFAULT_TAP_MS),                               \
+        .tick = DT_PROP_OR(n, tick, CONFIG_PMW3610_BALL_ACTION_TICK),                              \
+        .wait_ms = DT_PROP_OR(n, wait_ms, 0),                                                      \
+        .tap_ms = DT_PROP_OR(n, tap_ms, 0),                                                        \
     };
 
 
