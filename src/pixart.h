@@ -38,6 +38,12 @@ struct pixart_data {
     int64_t last_scroll_time;
 #endif
 
+#ifdef CONFIG_PMW3610_SCROLL_SNAP
+    int32_t scroll_snap_accumulated_x;
+    int32_t scroll_snap_accumulated_y;
+    int64_t scroll_snap_last_time;
+#endif
+
     // motion interrupt isr
     struct gpio_callback irq_gpio_cb;
     // the work structure holding the trigger job

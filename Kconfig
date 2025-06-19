@@ -191,6 +191,30 @@ config PMW3610_SCROLL_ACCELERATION_SENSITIVITY
     help
       Scrolling acceleration sensitivity. Higher values make scrolling more responsive with stronger acceleration.
 
+config PMW3610_SCROLL_SNAP
+    bool "Enable scroll snap to axis"
+    default n
+    help
+      Enable axis snapping for scrolling. This will snap scroll movement to the dominant axis,
+      making scrolling more precise and reducing diagonal movement.
+
+config PMW3610_SCROLL_SNAP_THRESHOLD
+    int "Scroll snap threshold (1-100)"
+    default 30
+    range 1 100
+    depends on PMW3610_SCROLL_SNAP
+    help
+      Threshold for axis snapping. Lower values make snapping more aggressive,
+      while higher values allow more diagonal movement before snapping.
+
+config PMW3610_SCROLL_SNAP_STRENGTH
+    int "Scroll snap strength (1-100)"
+    default 80
+    range 1 100
+    depends on PMW3610_SCROLL_SNAP
+    help
+      Strength of the axis snapping effect. Higher values create stronger snapping to the dominant axis.
+
 module = PMW3610
 module-str = PMW3610
 source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"

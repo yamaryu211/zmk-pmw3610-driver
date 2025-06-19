@@ -625,6 +625,77 @@ static inline void calculate_scroll_acceleration(int16_t x, int16_t y, struct pi
     #endif
 }
 
+static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_data *data) {
+#ifdef CONFIG_PMW3610_SCROLL_SNAP
+    if (!x || !y || !data) {
+        return;
+    }
+
+    int64_t current_time = k_uptime_get();
+    
+    // 長時間の間隔がある場合は蓄積値をリセット
+    if (data->scroll_snap_last_time > 0) {
+        int64_t elapsed = current_time - data->scroll_snap_last_time;
+        if (elapsed > 200) { // 200ms以上経過した場合はリセット
+            data->scroll_snap_accumulated_x = 0;
+            data->scroll_snap_accumulated_y = 0;
+        }
+    }
+
+    // 現在の値を蓄積
+    data->scroll_snap_accumulated_x += *x;
+    data->scroll_snap_accumulated_y += *y;
+
+    // 軸スナップ処理
+    int32_t abs_x = data->scroll_snap_accumulated_x < 0 ? -data->scroll_snap_accumulated_x : data->scroll_snap_accumulated_x;
+    int32_t abs_y = data->scroll_snap_accumulated_y < 0 ? -data->scroll_snap_accumulated_y : data->scroll_snap_accumulated_y;
+
+    if (abs_x == 0 && abs_y == 0) {
+        *x = 0;
+        *y = 0;
+        return;
+    }
+
+    // 主軸の判定とスナップ処理
+    if (abs_y > abs_x) {
+        // Y軸が主軸、X軸を減衰
+        if (abs_y > 0) {
+            float ratio = (float)abs_x / abs_y;
+            float threshold = (float)CONFIG_PMW3610_SCROLL_SNAP_THRESHOLD / 100.0f;
+            float strength = (float)CONFIG_PMW3610_SCROLL_SNAP_STRENGTH / 100.0f;
+            
+            if (ratio < threshold) {
+                // スナップ効果を適用
+                float snap_factor = 1.0f - (strength * (1.0f - ratio / threshold));
+                data->scroll_snap_accumulated_x = (int32_t)(data->scroll_snap_accumulated_x * snap_factor);
+            }
+        }
+    } else {
+        // X軸が主軸、Y軸を減衰
+        if (abs_x > 0) {
+            float ratio = (float)abs_y / abs_x;
+            float threshold = (float)CONFIG_PMW3610_SCROLL_SNAP_THRESHOLD / 100.0f;
+            float strength = (float)CONFIG_PMW3610_SCROLL_SNAP_STRENGTH / 100.0f;
+            
+            if (ratio < threshold) {
+                // スナップ効果を適用
+                float snap_factor = 1.0f - (strength * (1.0f - ratio / threshold));
+                data->scroll_snap_accumulated_y = (int32_t)(data->scroll_snap_accumulated_y * snap_factor);
+            }
+        }
+    }
+
+    // 処理済みの値を返す
+    *x = data->scroll_snap_accumulated_x;
+    *y = data->scroll_snap_accumulated_y;
+
+    // 蓄積値をリセット
+    data->scroll_snap_accumulated_x = 0;
+    data->scroll_snap_accumulated_y = 0;
+    data->scroll_snap_last_time = current_time;
+#endif
+}
+
 static inline void process_scroll_events(const struct device *dev, struct pixart_data *data,
                                         int32_t delta, bool is_horizontal) {
     if (abs(delta) > CONFIG_PMW3610_SCROLL_TICK) {
@@ -683,6 +754,11 @@ static int pmw3610_report_data(const struct device *dev) {
         if (input_mode_changed) {
             data->scroll_delta_x = 0;
             data->scroll_delta_y = 0;
+#ifdef CONFIG_PMW3610_SCROLL_SNAP
+            data->scroll_snap_accumulated_x = 0;
+            data->scroll_snap_accumulated_y = 0;
+            data->scroll_snap_last_time = 0;
+#endif
         }
         dividor = 1; // this should be handled with the ticks rather than dividors
         break;
@@ -837,6 +913,9 @@ static int pmw3610_report_data(const struct device *dev) {
             data->scroll_delta_x += accel_x;
             data->scroll_delta_y += accel_y;
             
+            // スクロールスナップ処理を適用
+            calculate_scroll_snap(&data->scroll_delta_x, &data->scroll_delta_y, data);
+            
             process_scroll_events(dev, data, data->scroll_delta_y, false);
             process_scroll_events(dev, data, data->scroll_delta_x, true);
         } else if (input_mode == BALL_ACTION) {
@@ -945,6 +1024,13 @@ static int pmw3610_init(const struct device *dev) {
 
     // init smart algorithm flag;
     data->sw_smart_flag = false;
+
+#ifdef CONFIG_PMW3610_SCROLL_SNAP
+    // init scroll snap data
+    data->scroll_snap_accumulated_x = 0;
+    data->scroll_snap_accumulated_y = 0;
+    data->scroll_snap_last_time = 0;
+#endif
 
     // init trigger handler work
     k_work_init(&data->trigger_work, pmw3610_work_callback);
