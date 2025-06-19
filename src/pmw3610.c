@@ -918,14 +918,16 @@ static int pmw3610_report_data(const struct device *dev) {
             input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
             input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
         } else if (input_mode == SCROLL) {
+            // まずスクロールスナップ処理を適用
+            int32_t snap_x = x, snap_y = y;
+            calculate_scroll_snap(&snap_x, &snap_y, data);
+            
+            // 次にスクロール加速処理を適用
             int32_t accel_x, accel_y;
-            calculate_scroll_acceleration(x, y, data, &accel_x, &accel_y);
+            calculate_scroll_acceleration(snap_x, snap_y, data, &accel_x, &accel_y);
             
             data->scroll_delta_x += accel_x;
             data->scroll_delta_y += accel_y;
-            
-            // スクロールスナップ処理を適用
-            calculate_scroll_snap(&data->scroll_delta_x, &data->scroll_delta_y, data);
             
             process_scroll_events(dev, data, data->scroll_delta_y, false);
             process_scroll_events(dev, data, data->scroll_delta_x, true);
