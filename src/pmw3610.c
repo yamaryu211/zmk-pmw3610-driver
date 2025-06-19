@@ -656,7 +656,17 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
         return;
     }
 
-    // 主軸の判定とスナップ処理
+#ifdef CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
+    // 軸固定モード：大きい方の軸のみにスクロール
+    if (abs_y > abs_x) {
+        // Y軸が主軸、X軸をゼロにする
+        data->scroll_snap_accumulated_x = 0;
+    } else {
+        // X軸が主軸、Y軸をゼロにする
+        data->scroll_snap_accumulated_y = 0;
+    }
+#else
+    // 減衰モード：既存の実装
     if (abs_y > abs_x) {
         // Y軸が主軸、X軸を減衰
         if (abs_y > 0) {
@@ -684,6 +694,7 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
             }
         }
     }
+#endif
 
     // 処理済みの値を返す
     *x = data->scroll_snap_accumulated_x;

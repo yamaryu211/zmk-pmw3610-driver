@@ -215,6 +215,25 @@ config PMW3610_SCROLL_SNAP_STRENGTH
     help
       Strength of the axis snapping effect. Higher values create stronger snapping to the dominant axis.
 
+choice
+    prompt "Scroll snap mode"
+    default PMW3610_SCROLL_SNAP_MODE_ATTENUATION
+    depends on PMW3610_SCROLL_SNAP
+
+config PMW3610_SCROLL_SNAP_MODE_ATTENUATION
+    bool "Attenuation mode"
+    help
+      Attenuate the non-dominant axis movement. This provides smooth transition
+      between axes while reducing diagonal movement.
+
+config PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
+    bool "Axis lock mode"
+    help
+      Lock scrolling to the dominant axis only. The non-dominant axis movement
+      is completely ignored, providing precise axis-aligned scrolling.
+
+endchoice
+
 module = PMW3610
 module-str = PMW3610
 source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
