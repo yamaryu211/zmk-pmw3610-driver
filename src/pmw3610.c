@@ -633,12 +633,15 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
 
     int64_t current_time = k_uptime_get();
     
-    // 長時間の間隔がある場合は蓄積値をリセット
+    // 動きが一定時間以上止まった場合にのみリセット
     if (data->scroll_snap_last_time > 0) {
         int64_t elapsed = current_time - data->scroll_snap_last_time;
-        if (elapsed > 200) { // 200ms以上経過した場合はリセット
+        int64_t reset_timeout = 800; // 800ms以上動きが止まった場合にリセット
+        
+        if (elapsed > reset_timeout) {
             data->scroll_snap_accumulated_x = 0;
             data->scroll_snap_accumulated_y = 0;
+            data->scroll_snap_last_time = 0;
         }
     }
 
@@ -700,9 +703,7 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
     *x = data->scroll_snap_accumulated_x;
     *y = data->scroll_snap_accumulated_y;
 
-    // 蓄積値をリセット
-    data->scroll_snap_accumulated_x = 0;
-    data->scroll_snap_accumulated_y = 0;
+    // 動きがあった場合は時間を更新（リセットは動きが止まった時のみ）
     data->scroll_snap_last_time = current_time;
 #endif
 }
