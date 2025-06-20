@@ -1,0 +1,20 @@
+trackball: trackball@0 {
+    status = "okay";
+    compatible = "pixart,pmw3610";
+    reg = <0>;
+    spi-max-frequency = <2000000>;
+    irq-gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+    
+    // スクロールスナップ機能の設定
+    scroll-snap;
+    scroll-snap-threshold = <50>;  // 穏やかな閾値
+    scroll-snap-strength = <40>;   // 穏やかな強度
+    
+    // 軸固定モードを有効にする場合（オプション）
+    // scroll-snap-mode-axis-lock;
+    // scroll-snap-axis-lock-timeout-ms = <1500>;  // 1.5秒
+    
+    // スクロール加速機能の設定（オプション）
+    // scroll-acceleration;
+    // scroll-acceleration-sensitivity = <3>;
+}; 

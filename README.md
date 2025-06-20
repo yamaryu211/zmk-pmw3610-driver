@@ -113,3 +113,40 @@ CONFIG_INPUT=y
 CONFIG_ZMK_MOUSE=y
 CONFIG_PMW3610=y
 ```
+
+## 機能
+
+- **レイヤー別スクロール**: 特定のレイヤーでのみスクロールを有効化
+- **スナイプ機能**: 特定のレイヤーでのみスナイプを有効化
+- **自動マウスレイヤー**: マウス移動時に自動的にレイヤーを切り替え
+- **スクロール加速**: 移動速度に基づくスクロール加速機能
+- **スクロールスナップ**: 軸にスナップするスクロール機能
+
+## スクロールスナップ機能
+
+スクロールスナップ機能は、マウスの移動を主要な軸（水平または垂直）にスナップさせることで、より正確なスクロール操作を可能にします。
+
+### 設定オプション
+
+- `scroll-snap`: スクロールスナップ機能の有効/無効
+- `scroll-snap-threshold`: スナップの閾値（1-100、低い値ほど積極的にスナップ）
+- `scroll-snap-strength`: スナップの強度（1-100、高い値ほど強いスナップ）
+- `scroll-snap-mode-axis-lock`: 軸ロックモードの有効/無効
+- `scroll-snap-axis-lock-timeout-ms`: 軸ロックのタイムアウト時間（100-5000ms）
+
+### 使用例
+
+```dts
+&pmw3610 {
+	irq-gpios = <&gpio0 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+
+	/* スクロールスナップ設定 */
+	scroll-snap;
+	scroll-snap-threshold = <30>;
+	scroll-snap-strength = <70>;
+	scroll-snap-mode-axis-lock;
+	scroll-snap-axis-lock-timeout-ms = <1000>;
+};
+```
+
+## 設定

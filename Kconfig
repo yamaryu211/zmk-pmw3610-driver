@@ -179,50 +179,56 @@ config PMW3610_BALL_ACTION_TICK
 
 config PMW3610_SCROLL_ACCELERATION
     bool "Enable scroll acceleration"
-    default n
+    depends on PMW3610
+    default y
     help
-      Enable acceleration for scrolling based on movement speed.
+      Enable scroll acceleration functionality for smoother scrolling experience.
 
 config PMW3610_SCROLL_ACCELERATION_SENSITIVITY
-    int "Scroll acceleration sensitivity (1-10)"
-    default 3
-    range 1 10
+    int "Scroll acceleration sensitivity"
     depends on PMW3610_SCROLL_ACCELERATION
+    range 1 10
+    default 5
     help
-      Scrolling acceleration sensitivity. Higher values make scrolling more responsive with stronger acceleration.
+      Scroll acceleration sensitivity (1-10). Higher values make acceleration more responsive.
 
 config PMW3610_SCROLL_SNAP
     bool "Enable scroll snap to axis"
-    default n
+    depends on PMW3610
+    default y
     help
-      Enable axis snapping for scrolling. This will snap scroll movement to the dominant axis,
-      making scrolling more precise and reducing diagonal movement.
+      Enable scroll snap functionality to lock scrolling to primary axis.
 
 config PMW3610_SCROLL_SNAP_THRESHOLD
-    int "Scroll snap threshold (1-100)"
-    default 30
-    range 1 100
+    int "Scroll snap threshold"
     depends on PMW3610_SCROLL_SNAP
+    range 1 100
+    default 30
     help
-      Threshold for axis snapping. Lower values make snapping more aggressive,
-      while higher values allow more diagonal movement before snapping.
+      Scroll snap threshold (1-100). Lower values make snapping more aggressive.
 
 config PMW3610_SCROLL_SNAP_STRENGTH
-    int "Scroll snap strength (1-100)"
-    default 80
-    range 1 100
+    int "Scroll snap strength"
     depends on PMW3610_SCROLL_SNAP
+    range 1 100
+    default 70
     help
-      Strength of the axis snapping effect. Higher values create stronger snapping to the dominant axis.
+      Scroll snap strength (1-100). Higher values create stronger snapping.
+
+config PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
+    bool "Enable axis lock mode for scroll snap"
+    depends on PMW3610_SCROLL_SNAP
+    default n
+    help
+      Enable axis lock mode which temporarily locks scrolling to the dominant axis.
 
 config PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS
-    int "Axis lock timeout (100-5000 ms)"
-    default 1000
+    int "Axis lock timeout (ms)"
+    depends on PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
     range 100 5000
-    depends on PMW3610_SCROLL_SNAP && PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
+    default 1000
     help
-      Time in milliseconds after which the axis lock is released when no movement is detected.
-      Lower values make axis switching more responsive, higher values maintain axis lock longer.
+      Axis lock timeout in milliseconds (100-5000).
 
 choice
     prompt "Scroll snap mode"
