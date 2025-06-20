@@ -223,6 +223,15 @@ config PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS
     help
       Axis lock timeout in milliseconds (100-5000).
 
+config PMW3610_SCROLL_SNAP_DEADTIME_MS
+    int "Scroll snap deadtime (ms)"
+    depends on PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
+    range 0 2000
+    default 400
+    help
+      Deadtime in milliseconds after axis lock timeout (0-2000).
+      During this time, scroll input is ignored to prevent unintended axis switching.
+
 choice
     prompt "Scroll snap mode"
     default PMW3610_SCROLL_SNAP_MODE_ATTENUATION

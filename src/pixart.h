@@ -42,6 +42,8 @@ struct pixart_data {
     int32_t scroll_snap_accumulated_x;
     int32_t scroll_snap_accumulated_y;
     int64_t scroll_snap_last_time;
+    int64_t scroll_snap_deadtime_start;  // デッドタイム開始時刻
+    bool scroll_snap_in_deadtime;        // デッドタイム中かどうか
 #endif
 
     // motion interrupt isr

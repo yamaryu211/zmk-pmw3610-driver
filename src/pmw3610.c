@@ -639,6 +639,20 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
     }
     
 #ifdef CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
+    // デッドタイムのチェック
+    if (data->scroll_snap_in_deadtime) {
+        int64_t deadtime_elapsed = current_time - data->scroll_snap_deadtime_start;
+        if (deadtime_elapsed < CONFIG_PMW3610_SCROLL_SNAP_DEADTIME_MS) {
+            // デッドタイム中は入力を無効化
+            *x = 0;
+            *y = 0;
+            return;
+        } else {
+            // デッドタイム終了
+            data->scroll_snap_in_deadtime = false;
+        }
+    }
+    
     // 軸固定モード：蓄積ベースのアプローチ
     if (abs(*y) > abs(*x)) {
         // Y軸が主軸の場合
@@ -658,13 +672,17 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
         }
     }
     
-    // 動きが止まった場合のリセット
+    // 動きが止まった場合のリセットとデッドタイム開始
     if (data->scroll_snap_last_time > 0) {
         int64_t elapsed = current_time - data->scroll_snap_last_time;
         if (elapsed > CONFIG_PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS) {
             data->scroll_snap_accumulated_x = 0;
             data->scroll_snap_accumulated_y = 0;
             data->scroll_snap_last_time = 0;
+            
+            // デッドタイム開始
+            data->scroll_snap_in_deadtime = true;
+            data->scroll_snap_deadtime_start = current_time;
         }
     }
 #else
@@ -779,9 +797,11 @@ static int pmw3610_report_data(const struct device *dev) {
             data->scroll_snap_accumulated_x = 0;
             data->scroll_snap_accumulated_y = 0;
             data->scroll_snap_last_time = 0;
+            data->scroll_snap_deadtime_start = 0;
+            data->scroll_snap_in_deadtime = false;
 #endif
         }
-        dividor = 1; // this should be handled with the ticks rather than dividors
+        dividor = 1;
         break;
     case SNIPE:
         set_cpi_if_needed(dev, CONFIG_PMW3610_SNIPE_CPI);
@@ -1051,6 +1071,8 @@ static int pmw3610_init(const struct device *dev) {
     data->scroll_snap_accumulated_x = 0;
     data->scroll_snap_accumulated_y = 0;
     data->scroll_snap_last_time = 0;
+    data->scroll_snap_deadtime_start = 0;
+    data->scroll_snap_in_deadtime = false;
 #endif
 
     // init trigger handler work
