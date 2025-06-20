@@ -18,27 +18,6 @@ properties:
   automouse-layer:
     type: int
     default: -1
-  scroll-snap:
-    type: boolean
-    description: "Enable scroll snap to axis functionality"
-  scroll-snap-threshold:
-    type: int
-    description: "Scroll snap threshold (1-100). Lower values make snapping more aggressive"
-  scroll-snap-strength:
-    type: int
-    description: "Scroll snap strength (1-100). Higher values create stronger snapping"
-  scroll-snap-mode-axis-lock:
-    type: boolean
-    description: "Enable axis lock mode for scroll snap"
-  scroll-snap-axis-lock-timeout-ms:
-    type: int
-    description: "Axis lock timeout in milliseconds (100-5000)"
-  scroll-acceleration:
-    type: boolean
-    description: "Enable scroll acceleration functionality"
-  scroll-acceleration-sensitivity:
-    type: int
-    description: "Scroll acceleration sensitivity (1-10)"
 
 child-binding:
   description: "Invoke behaviors when the track ball is moved on specific layers"
