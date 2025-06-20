@@ -202,7 +202,7 @@ config PMW3610_SCROLL_SNAP
 config PMW3610_SCROLL_SNAP_THRESHOLD
     int "Scroll snap threshold"
     depends on PMW3610_SCROLL_SNAP
-    range 1 100
+    range 1 1000
     default 30
     help
       Scroll snap threshold (1-100). Lower values make snapping more aggressive.
