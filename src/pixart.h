@@ -42,10 +42,6 @@ struct pixart_data {
     int32_t scroll_snap_accumulated_x;
     int32_t scroll_snap_accumulated_y;
     int64_t scroll_snap_last_time;
-#ifdef CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
-    int8_t scroll_snap_locked_axis; // -1: 未決定, 0: X軸固定, 1: Y軸固定
-    int64_t scroll_snap_axis_lock_time; // 軸固定開始時間
-#endif
 #endif
 
     // motion interrupt isr

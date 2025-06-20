@@ -633,23 +633,42 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
 
     int64_t current_time = k_uptime_get();
     
-    // 動きが一定時間以上止まった場合にのみリセット
+    // 動きがあった場合は時間を更新
+    if (*x != 0 || *y != 0) {
+        data->scroll_snap_last_time = current_time;
+    }
+    
+#ifdef CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
+    // 軸固定モード：蓄積ベースのアプローチ
+    if (abs(*y) > abs(*x)) {
+        // Y軸が主軸の場合
+        data->scroll_snap_accumulated_x += *x;
+        if (abs(data->scroll_snap_accumulated_x) < CONFIG_PMW3610_SCROLL_SNAP_THRESHOLD) {
+            *x = 0;  // 横方向を抑制
+        } else {
+            data->scroll_snap_accumulated_x = 0;  // 閾値を超えたらリセット
+        }
+    } else {
+        // X軸が主軸の場合
+        data->scroll_snap_accumulated_y += *y;
+        if (abs(data->scroll_snap_accumulated_y) < CONFIG_PMW3610_SCROLL_SNAP_THRESHOLD) {
+            *y = 0;  // 縦方向を抑制
+        } else {
+            data->scroll_snap_accumulated_y = 0;  // 閾値を超えたらリセット
+        }
+    }
+    
+    // 動きが止まった場合のリセット
     if (data->scroll_snap_last_time > 0) {
         int64_t elapsed = current_time - data->scroll_snap_last_time;
-        int64_t reset_timeout = 800; // 800ms以上動きが止まった場合にリセット
-        
-        if (elapsed > reset_timeout) {
+        if (elapsed > CONFIG_PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS) {
             data->scroll_snap_accumulated_x = 0;
             data->scroll_snap_accumulated_y = 0;
             data->scroll_snap_last_time = 0;
         }
     }
-
-    // 現在の値を蓄積
-    data->scroll_snap_accumulated_x += *x;
-    data->scroll_snap_accumulated_y += *y;
-
-    // 軸スナップ処理
+#else
+    // 減衰モード：既存の実装
     int32_t abs_x = data->scroll_snap_accumulated_x < 0 ? -data->scroll_snap_accumulated_x : data->scroll_snap_accumulated_x;
     int32_t abs_y = data->scroll_snap_accumulated_y < 0 ? -data->scroll_snap_accumulated_y : data->scroll_snap_accumulated_y;
 
@@ -659,47 +678,6 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
         return;
     }
 
-#ifdef CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
-    // 軸固定モード：一度決定された軸を停止判定まで維持
-    int8_t current_axis = -1; // -1: 未決定, 0: X軸, 1: Y軸
-    
-    // 現在の動きから主軸を判定
-    if (abs_y > abs_x) {
-        current_axis = 1; // Y軸が主軸
-    } else if (abs_x > abs_y) {
-        current_axis = 0; // X軸が主軸
-    }
-    
-    // 軸固定の判定と維持
-    if (data->scroll_snap_locked_axis == -1) {
-        // 軸が未決定の場合、新しい軸を決定
-        if (current_axis != -1) {
-            data->scroll_snap_locked_axis = current_axis;
-            data->scroll_snap_axis_lock_time = current_time;
-        }
-    } else {
-        // 軸が既に決定されている場合、停止判定のみをチェック
-        int64_t elapsed = current_time - data->scroll_snap_axis_lock_time;
-        int64_t stop_timeout = CONFIG_PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS;
-        
-        if (elapsed > stop_timeout) {
-            // 停止判定：軸固定を解除
-            data->scroll_snap_locked_axis = -1;
-            data->scroll_snap_axis_lock_time = 0;
-        }
-        // 軸固定中は異なる軸への動きがあっても軸を変更しない
-    }
-    
-    // 決定された軸に基づいて非主軸をゼロにする
-    if (data->scroll_snap_locked_axis == 0) {
-        // X軸固定
-        data->scroll_snap_accumulated_y = 0;
-    } else if (data->scroll_snap_locked_axis == 1) {
-        // Y軸固定
-        data->scroll_snap_accumulated_x = 0;
-    }
-#else
-    // 減衰モード：既存の実装
     if (abs_y > abs_x) {
         // Y軸が主軸、X軸を減衰
         if (abs_y > 0) {
@@ -727,14 +705,11 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
             }
         }
     }
-#endif
 
     // 処理済みの値を返す
     *x = data->scroll_snap_accumulated_x;
     *y = data->scroll_snap_accumulated_y;
-
-    // 動きがあった場合は時間を更新（リセットは動きが止まった時のみ）
-    data->scroll_snap_last_time = current_time;
+#endif
 #endif
 }
 
@@ -804,10 +779,6 @@ static int pmw3610_report_data(const struct device *dev) {
             data->scroll_snap_accumulated_x = 0;
             data->scroll_snap_accumulated_y = 0;
             data->scroll_snap_last_time = 0;
-#ifdef CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
-            data->scroll_snap_locked_axis = -1;
-            data->scroll_snap_axis_lock_time = 0;
-#endif
 #endif
         }
         dividor = 1; // this should be handled with the ticks rather than dividors
@@ -1080,10 +1051,6 @@ static int pmw3610_init(const struct device *dev) {
     data->scroll_snap_accumulated_x = 0;
     data->scroll_snap_accumulated_y = 0;
     data->scroll_snap_last_time = 0;
-#ifdef CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
-    data->scroll_snap_locked_axis = -1;
-    data->scroll_snap_axis_lock_time = 0;
-#endif
 #endif
 
     // init trigger handler work
