@@ -215,13 +215,6 @@ config PMW3610_SCROLL_SNAP_STRENGTH
     help
       Scroll snap strength (1-100). Higher values create stronger snapping.
 
-config PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
-    bool "Enable axis lock mode for scroll snap"
-    depends on PMW3610_SCROLL_SNAP
-    default n
-    help
-      Enable axis lock mode which temporarily locks scrolling to the dominant axis.
-
 config PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS
     int "Axis lock timeout (ms)"
     depends on PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
