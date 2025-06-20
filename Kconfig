@@ -215,6 +215,15 @@ config PMW3610_SCROLL_SNAP_STRENGTH
     help
       Strength of the axis snapping effect. Higher values create stronger snapping to the dominant axis.
 
+config PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS
+    int "Axis lock timeout (100-5000 ms)"
+    default 1000
+    range 100 5000
+    depends on PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
+    help
+      Time in milliseconds after which the axis lock is released when no movement is detected.
+      Lower values make axis switching more responsive, higher values maintain axis lock longer.
+
 choice
     prompt "Scroll snap mode"
     default PMW3610_SCROLL_SNAP_MODE_ATTENUATION
@@ -227,7 +236,8 @@ config PMW3610_SCROLL_SNAP_MODE_ATTENUATION
       between axes while reducing diagonal movement.
 
 config PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
-    bool "Axis lock mode"
+    bool "Axis lock mode" 
+    default n
     help
       Lock scrolling to the dominant axis only. The non-dominant axis movement
       is completely ignored, providing precise axis-aligned scrolling.
