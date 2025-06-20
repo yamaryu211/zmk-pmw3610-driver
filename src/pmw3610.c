@@ -678,19 +678,16 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
             data->scroll_snap_axis_lock_time = current_time;
         }
     } else {
-        // 軸が既に決定されている場合、停止判定をチェック
+        // 軸が既に決定されている場合、停止判定のみをチェック
         int64_t elapsed = current_time - data->scroll_snap_axis_lock_time;
-        int64_t stop_timeout = CONFIG_PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS; // 設定値を使用
+        int64_t stop_timeout = CONFIG_PMW3610_SCROLL_SNAP_AXIS_LOCK_TIMEOUT_MS;
         
         if (elapsed > stop_timeout) {
             // 停止判定：軸固定を解除
             data->scroll_snap_locked_axis = -1;
             data->scroll_snap_axis_lock_time = 0;
-        } else if (current_axis != -1 && current_axis != data->scroll_snap_locked_axis) {
-            // 異なる軸への動きが検出された場合、軸固定を更新
-            data->scroll_snap_locked_axis = current_axis;
-            data->scroll_snap_axis_lock_time = current_time;
         }
+        // 軸固定中は異なる軸への動きがあっても軸を変更しない
     }
     
     // 決定された軸に基づいて非主軸をゼロにする
