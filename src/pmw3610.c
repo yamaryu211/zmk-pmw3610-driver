@@ -670,12 +670,17 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
         current_axis = 0; // X軸が主軸
     }
     
+    // デバッグログを追加
+    LOG_DBG("Axis lock: current_axis=%d, locked_axis=%d, abs_x=%d, abs_y=%d", 
+            current_axis, data->scroll_snap_locked_axis, abs_x, abs_y);
+    
     // 軸固定の判定と維持
     if (data->scroll_snap_locked_axis == -1) {
         // 軸が未決定の場合、新しい軸を決定
         if (current_axis != -1) {
             data->scroll_snap_locked_axis = current_axis;
             data->scroll_snap_axis_lock_time = current_time;
+            LOG_DBG("Axis lock: New axis locked: %d", current_axis);
         }
     } else {
         // 軸が既に決定されている場合、停止判定のみをチェック
@@ -684,6 +689,7 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
         
         if (elapsed > stop_timeout) {
             // 停止判定：軸固定を解除
+            LOG_DBG("Axis lock: Timeout reached, unlocking axis");
             data->scroll_snap_locked_axis = -1;
             data->scroll_snap_axis_lock_time = 0;
         }
@@ -694,9 +700,11 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
     if (data->scroll_snap_locked_axis == 0) {
         // X軸固定
         data->scroll_snap_accumulated_y = 0;
+        LOG_DBG("Axis lock: X-axis locked, Y-axis zeroed");
     } else if (data->scroll_snap_locked_axis == 1) {
         // Y軸固定
         data->scroll_snap_accumulated_x = 0;
+        LOG_DBG("Axis lock: Y-axis locked, X-axis zeroed");
     }
 #else
     // 減衰モード：既存の実装
@@ -741,6 +749,11 @@ static inline void calculate_scroll_snap(int32_t *x, int32_t *y, struct pixart_d
 static inline void process_scroll_events(const struct device *dev, struct pixart_data *data,
                                         int32_t delta, bool is_horizontal) {
     if (abs(delta) > CONFIG_PMW3610_SCROLL_TICK) {
+        // デバッグログを追加
+        LOG_DBG("Scroll event: delta=%d, is_horizontal=%d, axis_lock=%d", 
+                delta, is_horizontal, 
+                IS_ENABLED(CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK) ? 1 : 0);
+        
         int event_count = abs(delta) / CONFIG_PMW3610_SCROLL_TICK;
         const int MAX_EVENTS = 20;
         int32_t *target_delta = is_horizontal ? &data->scroll_delta_x : &data->scroll_delta_y;
@@ -765,11 +778,17 @@ static inline void process_scroll_events(const struct device *dev, struct pixart
                             K_MSEC(10));
         }
         
+        // 軸固定モードでは、この処理をスキップする
+        // 軸固定モードでは既にcalculate_scroll_snapで非主軸の動きをゼロにしているため
+#ifndef CONFIG_PMW3610_SCROLL_SNAP_MODE_AXIS_LOCK
         if (is_horizontal) {
             data->scroll_delta_y = 0;
+            LOG_DBG("Scroll: Zeroing Y delta (non-axis-lock mode)");
         } else {
             data->scroll_delta_x = 0;
+            LOG_DBG("Scroll: Zeroing X delta (non-axis-lock mode)");
         }
+#endif
     }
 }
 
