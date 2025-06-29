@@ -626,41 +626,32 @@ static inline void calculate_scroll_acceleration(int16_t x, int16_t y, struct pi
     #endif
 }
 
-static inline void process_scroll_events(const struct device *dev, struct pixart_data *data,
-                                        int32_t delta, bool is_horizontal) {
-    if (abs(delta) > CONFIG_PMW3610_SCROLL_TICK) {
-        int event_count = abs(delta) / CONFIG_PMW3610_SCROLL_TICK;
-        const int MAX_EVENTS = 20;
-        int32_t *target_delta = is_horizontal ? &data->scroll_delta_x : &data->scroll_delta_y;
+static inline void process_scroll_events_unified(const struct device *dev, struct pixart_data *data,
+                                                int32_t delta_x, int32_t delta_y) {
+    // 斜め方向の動きの大きさを計算
+    float magnitude = sqrtf(delta_x * delta_x + delta_y * delta_y);
+    
+    if (magnitude > CONFIG_PMW3610_SCROLL_TICK) {
+        // 主な方向を決定
+        bool is_horizontal = abs(delta_x) > abs(delta_y);
+        int32_t primary_delta = is_horizontal ? delta_x : delta_y;
         
-        if (event_count > MAX_EVENTS) {
-            event_count = MAX_EVENTS;
-            *target_delta = (delta > 0) ? 
-                delta - (MAX_EVENTS * CONFIG_PMW3610_SCROLL_TICK) :
-                delta + (MAX_EVENTS * CONFIG_PMW3610_SCROLL_TICK);
-            data->last_remainder_time = k_uptime_get();
-        } else {
-            *target_delta = delta % CONFIG_PMW3610_SCROLL_TICK;
-        }
+        // 主な方向のスクロールイベントを処理
+        process_scroll_events(dev, data, primary_delta, is_horizontal);
         
-        for (int i = 0; i < event_count; i++) {
-            input_report_rel(dev,
-                            is_horizontal ? INPUT_REL_HWHEEL : INPUT_REL_WHEEL,
-                            delta > 0 ? 
-                                (is_horizontal ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_Y_NEGATIVE) :
-                                (is_horizontal ? PMW3610_SCROLL_X_POSITIVE : PMW3610_SCROLL_Y_POSITIVE),
-                            (i == event_count - 1),
-                            K_MSEC(10));
-        }
-        
-        if (is_horizontal) {
-            data->scroll_delta_y = 0;
-        } else {
-            data->scroll_delta_x = 0;
+        // 斜め方向の場合は補助的なスクロールを追加
+        if (abs(delta_x) > 0 && abs(delta_y) > 0) {
+            float ratio = fminf(abs(delta_x), abs(delta_y)) / magnitude;
+            if (ratio > 0.3f) {  // 30%以上の斜め成分がある場合
+                int32_t secondary_delta = is_horizontal ? delta_y : delta_x;
+                bool secondary_is_horizontal = !is_horizontal;
+                
+                if (abs(secondary_delta) > CONFIG_PMW3610_SCROLL_TICK / 2) {
+    process_scroll_events(dev, data, secondary_delta, secondary_is_horizontal);
+}
         }
     }
 }
-
 
 static int pmw3610_report_data(const struct device *dev) {
     struct pixart_data *data = dev->data;
@@ -884,14 +875,7 @@ static int pmw3610_report_data(const struct device *dev) {
             input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
             input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
         } else if (input_mode == SCROLL) {
-            int32_t accel_x, accel_y;
-            calculate_scroll_acceleration(x, y, data, &accel_x, &accel_y);
-            
-            data->scroll_delta_x += accel_x;
-            data->scroll_delta_y += accel_y;
-            
-            process_scroll_events(dev, data, data->scroll_delta_y, false);
-            process_scroll_events(dev, data, data->scroll_delta_x, true);
+            process_scroll_events_unified(dev, data, x, y);
         } else if (input_mode == BALL_ACTION) {
             data->ball_action_delta_x += x;
             data->ball_action_delta_y += y;
