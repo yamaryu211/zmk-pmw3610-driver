@@ -626,6 +626,9 @@ static inline void calculate_scroll_acceleration(int16_t x, int16_t y, struct pi
     #endif
 }
 
+static inline void process_scroll_events(const struct device *dev, struct pixart_data *data,
+                                        int32_t delta, bool is_horizontal);
+
 static inline void process_scroll_events_unified(const struct device *dev, struct pixart_data *data,
                                                 int32_t delta_x, int32_t delta_y) {
     // 斜め方向の動きの大きさを計算
@@ -647,8 +650,9 @@ static inline void process_scroll_events_unified(const struct device *dev, struc
                 bool secondary_is_horizontal = !is_horizontal;
                 
                 if (abs(secondary_delta) > CONFIG_PMW3610_SCROLL_TICK / 2) {
-    process_scroll_events(dev, data, secondary_delta, secondary_is_horizontal);
-}
+                    process_scroll_events(dev, data, secondary_delta, secondary_is_horizontal);
+                }
+            }
         }
     }
 }
