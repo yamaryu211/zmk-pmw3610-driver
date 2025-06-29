@@ -177,11 +177,11 @@ config PMW3610_ACCEL_ALGO_POWCURVE
 endchoice
 
 config PMW3610_SPEED_ADJUST
-    float "Speed adjust parameter for pow curve"
+    int "Speed adjust parameter for pow curve (x100, e.g. 120 for 1.20)"
     depends on PMW3610_ACCEL_ALGO_POWCURVE
-    default 1.2
+    default 120
     help
-      Used as the exponent in pow curve acceleration.
+      Used as the exponent in pow curve acceleration. Specify as integer x100 (e.g. 120 for 1.20).
 
 config PMW3610_MOVEMENT_THRESHOLD
     int "Movement threshold for automatic mouse layer activation"

@@ -755,7 +755,7 @@ static int pmw3610_report_data(const struct device *dev) {
             int sign_x = (fx > 0) - (fx < 0);
             int sign_y = (fy > 0) - (fy < 0);
             float cpi_f = (float)CONFIG_PMW3610_CPI;
-            float speed_adjust = (float)CONFIG_PMW3610_SPEED_ADJUST;
+            float speed_adjust = (float)CONFIG_PMW3610_SPEED_ADJUST / 100.0f;
             fx -= powf(fabsf(fx), speed_adjust) / powf(cpi_f / 3.0f, speed_adjust) * cpi_f / 3.0f * sign_x;
             fy -= powf(fabsf(fy), speed_adjust) / powf(cpi_f / 3.0f, speed_adjust) * cpi_f / 3.0f * sign_y;
             raw_x = (int16_t)fx;
