@@ -784,6 +784,23 @@ static int pmw3610_report_data(const struct device *dev) {
                 raw_x = (int16_t)(normalized_x * magnitude * multiplier);
                 raw_y = (int16_t)(normalized_y * magnitude * multiplier);
             }
+        #elif defined(CONFIG_PMW3610_ACCEL_ALGO_NATURAL)
+            int16_t movement_size = abs(raw_x) + abs(raw_y);
+            float speed_multiplier;
+
+            if (movement_size < 1) {
+                speed_multiplier = 0.1f;
+            } else if (movement_size <= CONFIG_PMW3610_NATURAL_THRESHOLD) {
+                float a = CONFIG_PMW3610_NATURAL_A;
+                float b = CONFIG_PMW3610_NATURAL_B;
+                float adjusted = powf((float)(movement_size - 1), b);
+                speed_multiplier = fminf(0.1f + a * adjusted, CONFIG_PMW3610_NATURAL_MAX_GAIN);
+            } else {
+                speed_multiplier = CONFIG_PMW3610_NATURAL_MAX_GAIN;
+            }
+
+            raw_x = (int16_t)((float)raw_x * speed_multiplier);
+            raw_y = (int16_t)((float)raw_y * speed_multiplier);
         #endif
     #endif
 

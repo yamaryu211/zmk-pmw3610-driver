@@ -180,6 +180,11 @@ config PMW3610_ACCEL_ALGO_PRECISION
     bool "Precision acceleration (sigmoid-based, with configurable max multiplier)"
     depends on PMW3610
 
+config PMW3610_ACCEL_ALGO_NATURAL
+    bool "Enable Natural Acceleration Algorithm"
+    depends on PMW3610
+    help
+      Use a smooth, nonlinear acceleration curve based on (x - 1)^b.
 endchoice
 
 config PMW3610_SPEED_ADJUST
@@ -198,6 +203,34 @@ config PMW3610_MAX_MULTIPLIER
     help
       Maximum acceleration multiplier for precision algorithm. Higher values provide more acceleration for large movements.
       Specify as integer x100 (e.g. 300 for 3.0x multiplier).
+
+config PMW3610_NATURAL_A
+    float "Natural acceleration factor A"
+    default 0.01
+    depends on PMW3610_ACCEL_ALGO_NATURAL && PMW3610
+    help
+      Controls the steepness of the acceleration curve.
+
+config PMW3610_NATURAL_B
+    float "Natural acceleration exponent B"
+    default 1.8
+    depends on PMW3610_ACCEL_ALGO_NATURAL && PMW3610
+    help
+      Controls the curvature shape of the acceleration.
+
+config PMW3610_NATURAL_THRESHOLD
+    int "Natural acceleration saturation threshold"
+    default 40
+    depends on PMW3610_ACCEL_ALGO_NATURAL && PMW3610
+    help
+      Movement size beyond which maximum gain is applied.
+
+config PMW3610_NATURAL_MAX_GAIN
+    float "Natural acceleration max multiplier"
+    default 3.0
+    depends on PMW3610_ACCEL_ALGO_NATURAL && PMW3610
+    help
+      Upper limit of the acceleration multiplier.
 
 config PMW3610_MOVEMENT_THRESHOLD
     int "Movement threshold for automatic mouse layer activation"
