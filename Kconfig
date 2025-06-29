@@ -163,6 +163,26 @@ config PMW3610_ADJUSTABLE_MOUSESPEED
   bool "Enable Adujutable mouse speed"
   default n
 
+choice
+    prompt "Acceleration algorithm for adjustable mouse speed"
+    default PMW3610_ACCEL_ALGO_CLASSIC
+    depends on PMW3610_ADJUSTABLE_MOUSESPEED
+
+config PMW3610_ACCEL_ALGO_CLASSIC
+    bool "Classic (stepwise multiplier)"
+
+config PMW3610_ACCEL_ALGO_POWCURVE
+    bool "Pow curve (pow/fabs/cpi/speed_adjust, subtract from original value)"
+
+endchoice
+
+config PMW3610_SPEED_ADJUST
+    float "Speed adjust parameter for pow curve"
+    depends on PMW3610_ACCEL_ALGO_POWCURVE
+    default 1.2
+    help
+      Used as the exponent in pow curve acceleration.
+
 config PMW3610_MOVEMENT_THRESHOLD
     int "Movement threshold for automatic mouse layer activation"
     default 5

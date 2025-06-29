@@ -27,6 +27,7 @@
 #include "pmw3610.h"
 
 #include <zephyr/logging/log.h>
+#include <math.h>
 LOG_MODULE_REGISTER(pmw3610, CONFIG_INPUT_LOG_LEVEL);
 
 
@@ -728,28 +729,38 @@ static int pmw3610_report_data(const struct device *dev) {
 
     // マウスカーソル加速の設定
     #ifdef CONFIG_PMW3610_ADJUSTABLE_MOUSESPEED
-        int16_t movement_size = abs(raw_x) + abs(raw_y);
-
-        float speed_multiplier = 1.0; //速度の倍率
-        if (movement_size > 60) {
-            speed_multiplier = 3.0;
-        }else if (movement_size > 30) {
-            speed_multiplier = 1.5;
-        }else if (movement_size > 5) {
-            speed_multiplier = 1.0;
-        }else if (movement_size > 4) {
-            speed_multiplier = 0.9;
-        }else if (movement_size > 3) {
-            speed_multiplier = 0.7;
-        }else if (movement_size > 2) {
-            speed_multiplier = 0.5;
-        }else if (movement_size > 1) {
-            speed_multiplier = 0.1;
-        }
-
-        raw_x = raw_x * speed_multiplier;
-        raw_y = raw_y * speed_multiplier;
-
+        #if defined(CONFIG_PMW3610_ACCEL_ALGO_CLASSIC)
+            int16_t movement_size = abs(raw_x) + abs(raw_y);
+            float speed_multiplier = 1.0;
+            if (movement_size > 60) {
+                speed_multiplier = 3.0;
+            } else if (movement_size > 30) {
+                speed_multiplier = 1.5;
+            } else if (movement_size > 5) {
+                speed_multiplier = 1.0;
+            } else if (movement_size > 4) {
+                speed_multiplier = 0.9;
+            } else if (movement_size > 3) {
+                speed_multiplier = 0.7;
+            } else if (movement_size > 2) {
+                speed_multiplier = 0.5;
+            } else if (movement_size > 1) {
+                speed_multiplier = 0.1;
+            }
+            raw_x = raw_x * speed_multiplier;
+            raw_y = raw_y * speed_multiplier;
+        #elif defined(CONFIG_PMW3610_ACCEL_ALGO_POWCURVE)
+            float fx = (float)raw_x;
+            float fy = (float)raw_y;
+            int sign_x = (fx > 0) - (fx < 0);
+            int sign_y = (fy > 0) - (fy < 0);
+            float cpi_f = (float)CONFIG_PMW3610_CPI;
+            float speed_adjust = (float)CONFIG_PMW3610_SPEED_ADJUST;
+            fx -= powf(fabsf(fx), speed_adjust) / powf(cpi_f / 3.0f, speed_adjust) * cpi_f / 3.0f * sign_x;
+            fy -= powf(fabsf(fy), speed_adjust) / powf(cpi_f / 3.0f, speed_adjust) * cpi_f / 3.0f * sign_y;
+            raw_x = (int16_t)fx;
+            raw_y = (int16_t)fy;
+        #endif
     #endif
 
 
