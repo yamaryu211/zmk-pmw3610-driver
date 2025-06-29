@@ -194,10 +194,10 @@ config PMW3610_MAX_MULTIPLIER
     int "Maximum acceleration multiplier for precision algorithm (x100, e.g. 30 for 3.0x)"
     depends on PMW3610_ACCEL_ALGO_PRECISION && PMW3610
     default 30
-    range 10 50
+    range 10 1000
     help
       Maximum acceleration multiplier for precision algorithm. Higher values provide more acceleration for large movements.
-      Specify as integer x100 (e.g. 30 for 3.0x multiplier).
+      Specify as integer x100 (e.g. 300 for 3.0x multiplier).
 
 config PMW3610_MOVEMENT_THRESHOLD
     int "Movement threshold for automatic mouse layer activation"
