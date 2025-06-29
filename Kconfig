@@ -205,18 +205,18 @@ config PMW3610_MAX_MULTIPLIER
       Specify as integer x100 (e.g. 300 for 3.0x multiplier).
 
 config PMW3610_NATURAL_A
-    float "Natural acceleration factor A"
-    default 0.01
-    depends on PMW3610_ACCEL_ALGO_NATURAL && PMW3610
+    int "Natural acceleration factor A (x100, e.g. 10 for 0.1)"
+    default 10
+    range 1 1000
     help
-      Controls the steepness of the acceleration curve.
+      Natural acceleration factor A. Specify as integer x100 (e.g. 10 for 0.1).
 
 config PMW3610_NATURAL_B
-    float "Natural acceleration exponent B"
-    default 1.8
-    depends on PMW3610_ACCEL_ALGO_NATURAL && PMW3610
+    int "Natural acceleration factor B (x100, e.g. 50 for 0.5)"
+    default 50
+    range 10 200
     help
-      Controls the curvature shape of the acceleration.
+      Natural acceleration factor B. Specify as integer x100 (e.g. 50 for 0.5).
 
 config PMW3610_NATURAL_THRESHOLD
     int "Natural acceleration saturation threshold"
@@ -226,11 +226,11 @@ config PMW3610_NATURAL_THRESHOLD
       Movement size beyond which maximum gain is applied.
 
 config PMW3610_NATURAL_MAX_GAIN
-    float "Natural acceleration max multiplier"
-    default 3.0
-    depends on PMW3610_ACCEL_ALGO_NATURAL && PMW3610
+    int "Natural maximum gain (x100, e.g. 30 for 3.0)"
+    default 30
+    range 10 100
     help
-      Upper limit of the acceleration multiplier.
+      Natural maximum gain. Specify as integer x100 (e.g. 30 for 3.0).
 
 config PMW3610_MOVEMENT_THRESHOLD
     int "Movement threshold for automatic mouse layer activation"

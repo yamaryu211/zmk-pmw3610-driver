@@ -791,12 +791,13 @@ static int pmw3610_report_data(const struct device *dev) {
             if (movement_size < 1) {
                 speed_multiplier = 0.1f;
             } else if (movement_size <= CONFIG_PMW3610_NATURAL_THRESHOLD) {
-                float a = CONFIG_PMW3610_NATURAL_A;
-                float b = CONFIG_PMW3610_NATURAL_B;
+                float a = (float)CONFIG_PMW3610_NATURAL_A / 100.0f;  // 100で割って実際の値に変換
+                float b = (float)CONFIG_PMW3610_NATURAL_B / 100.0f;  // 100で割って実際の値に変換
                 float adjusted = powf((float)(movement_size - 1), b);
-                speed_multiplier = fminf(0.1f + a * adjusted, CONFIG_PMW3610_NATURAL_MAX_GAIN);
+                float max_gain = (float)CONFIG_PMW3610_NATURAL_MAX_GAIN / 100.0f;  // 100で割って実際の値に変換
+                speed_multiplier = fminf(0.1f + a * adjusted, max_gain);
             } else {
-                speed_multiplier = CONFIG_PMW3610_NATURAL_MAX_GAIN;
+                speed_multiplier = (float)CONFIG_PMW3610_NATURAL_MAX_GAIN / 100.0f;  // 100で割って実際の値に変換
             }
 
             raw_x = (int16_t)((float)raw_x * speed_multiplier);
