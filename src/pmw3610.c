@@ -726,7 +726,7 @@ static int pmw3610_report_data(const struct device *dev) {
     int16_t raw_y =
         TOINT16((buf[PMW3610_Y_L_POS] + ((buf[PMW3610_XY_H_POS] & 0x0F) << 8)), 12) / dividor;
 
-    // マウスカーソルn加の設定
+    // マウスカーソル加速の設定
     #ifdef CONFIG_PMW3610_ADJUSTABLE_MOUSESPEED
         int16_t movement_size = abs(raw_x) + abs(raw_y);
 
