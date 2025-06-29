@@ -627,7 +627,43 @@ static inline void calculate_scroll_acceleration(int16_t x, int16_t y, struct pi
 }
 
 static inline void process_scroll_events(const struct device *dev, struct pixart_data *data,
-                                        int32_t delta, bool is_horizontal);
+                                        int32_t delta, bool is_horizontal) {
+    if (abs(delta) > CONFIG_PMW3610_SCROLL_TICK) {
+        int event_count = abs(delta) / CONFIG_PMW3610_SCROLL_TICK;
+        const int MAX_EVENTS = 20;
+        int32_t *target_delta = is_horizontal ? &data->scroll_delta_x : &data->scroll_delta_y;
+        
+        if (event_count > MAX_EVENTS) {
+            event_count = MAX_EVENTS;
+            *target_delta = (delta > 0) ? 
+                delta - (MAX_EVENTS * CONFIG_PMW3610_SCROLL_TICK) :
+                delta + (MAX_EVENTS * CONFIG_PMW3610_SCROLL_TICK);
+            data->last_remainder_time = k_uptime_get();
+        } else {
+            *target_delta = delta % CONFIG_PMW3610_SCROLL_TICK;
+        }
+        
+        for (int i = 0; i < event_count; i++) {
+            input_report_rel(dev,
+                            is_horizontal ? INPUT_REL_HWHEEL : INPUT_REL_WHEEL,
+                            delta > 0 ? 
+                                (is_horizontal ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_Y_NEGATIVE) :
+                                (is_horizontal ? PMW3610_SCROLL_X_POSITIVE : PMW3610_SCROLL_Y_POSITIVE),
+                            (i == event_count - 1),
+                            K_MSEC(10));
+        }
+        
+        // 一定時間後に状態をリセット
+        int64_t current_time = k_uptime_get();
+        if (current_time - data->last_scroll_time > 50) {
+            if (is_horizontal) {
+                data->scroll_delta_y = 0;
+            } else {
+                data->scroll_delta_x = 0;
+            }
+        }
+    }
+}
 
 static inline void process_scroll_events_unified(const struct device *dev, struct pixart_data *data,
                                                 int32_t delta_x, int32_t delta_y) {
