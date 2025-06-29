@@ -166,19 +166,21 @@ config PMW3610_ADJUSTABLE_MOUSESPEED
 choice
     prompt "Acceleration algorithm for adjustable mouse speed"
     default PMW3610_ACCEL_ALGO_CLASSIC
-    depends on PMW3610_ADJUSTABLE_MOUSESPEED
+    depends on PMW3610_ADJUSTABLE_MOUSESPEED && PMW3610
 
 config PMW3610_ACCEL_ALGO_CLASSIC
     bool "Classic (stepwise multiplier)"
+    depends on PMW3610
 
 config PMW3610_ACCEL_ALGO_POWCURVE
     bool "Pow curve (pow/fabs/cpi/speed_adjust, subtract from original value)"
+    depends on PMW3610
 
 endchoice
 
 config PMW3610_SPEED_ADJUST
     int "Speed adjust parameter for pow curve (x100, e.g. 120 for 1.20)"
-    depends on PMW3610_ACCEL_ALGO_POWCURVE
+    depends on PMW3610_ACCEL_ALGO_POWCURVE && PMW3610
     default 120
     help
       Used as the exponent in pow curve acceleration. Specify as integer x100 (e.g. 120 for 1.20).
