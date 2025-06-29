@@ -214,7 +214,7 @@ config PMW3610_NATURAL_A
 config PMW3610_NATURAL_B
     int "Natural acceleration factor B (x100, e.g. 50 for 0.5)"
     default 50
-    range 10 200
+    range 10 500
     help
       Natural acceleration factor B. Specify as integer x100 (e.g. 50 for 0.5).
 
@@ -228,7 +228,7 @@ config PMW3610_NATURAL_THRESHOLD
 config PMW3610_NATURAL_MAX_GAIN
     int "Natural maximum gain (x100, e.g. 30 for 3.0)"
     default 30
-    range 10 100
+    range 10 1000
     help
       Natural maximum gain. Specify as integer x100 (e.g. 30 for 3.0).
 
