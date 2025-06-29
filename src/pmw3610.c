@@ -760,6 +760,30 @@ static int pmw3610_report_data(const struct device *dev) {
             fy -= powf(fabsf(fy), speed_adjust) / powf(cpi_f / 3.0f, speed_adjust) * cpi_f / 3.0f * sign_y;
             raw_x = (int16_t)fx;
             raw_y = (int16_t)fy;
+        #elif defined(CONFIG_PMW3610_ACCEL_ALGO_PRECISION)
+            // 精密加速アルゴリズム（シグモイド関数ベース）
+            float magnitude = sqrtf(raw_x * raw_x + raw_y * raw_y);
+            
+            if (magnitude > 0) {
+                // 正規化された入力 (0～1の範囲)
+                float normalized_input = fminf(magnitude / (CONFIG_PMW3610_CPI / 2.0f), 1.0f);
+                
+                // シグモイド関数で滑らかなカーブを生成
+                float speed_adjust = (float)CONFIG_PMW3610_SPEED_ADJUST / 100.0f;
+                float sigmoid = 1.0f / (1.0f + expf(-speed_adjust * (normalized_input - 0.5f)));
+                
+                // 倍率の範囲を調整
+                float min_multiplier = 0.1f;  // 最小倍率（精密性向上）
+                float max_multiplier = (float)CONFIG_PMW3610_MAX_MULTIPLIER / 100.0f;
+                float multiplier = min_multiplier + (max_multiplier - min_multiplier) * sigmoid;
+                
+                // 方向を保持しながら倍率を適用
+                float normalized_x = raw_x / magnitude;
+                float normalized_y = raw_y / magnitude;
+                
+                raw_x = (int16_t)(normalized_x * magnitude * multiplier);
+                raw_y = (int16_t)(normalized_y * magnitude * multiplier);
+            }
         #endif
     #endif
 
