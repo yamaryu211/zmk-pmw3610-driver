@@ -113,3 +113,80 @@ CONFIG_INPUT=y
 CONFIG_ZMK_MOUSE=y
 CONFIG_PMW3610=y
 ```
+
+## Mac Mouse Fix Style Smooth Scrolling
+
+This driver includes an enhanced scrolling feature inspired by Mac Mouse Fix, providing a smooth and natural scrolling experience similar to macOS Magic Mouse or Mac Mouse Fix software.
+
+### Key Features
+
+1. **Momentum Scrolling**: After stopping scroll input, scrolling continues naturally with momentum and gradually decelerates
+2. **Smooth Deceleration**: Exponential decay curve provides natural stopping feel
+3. **Fine Scroll Control**: High-precision scroll division for ultra-smooth scrolling
+4. **Adaptive Speed Control**: Momentum strength automatically adjusts based on input velocity
+
+### Configuration
+
+#### 1. Enable Mac Mouse Fix Style Scrolling
+
+Add these options to your Kconfig:
+
+```conf
+CONFIG_PMW3610_SCROLL_MODE_STANDARD=n
+CONFIG_PMW3610_SCROLL_MODE_MAC_MOUSE_FIX=y
+```
+
+#### 2. Fine-tune Parameters
+
+Customize the scrolling behavior with these parameters:
+
+```conf
+# Friction coefficient (smaller = stops sooner)
+CONFIG_PMW3610_MOMENTUM_SCROLL_FRICTION=980  # 0.98
+
+# Minimum velocity for momentum scrolling (stops below this)
+CONFIG_PMW3610_MOMENTUM_SCROLL_MIN_VELOCITY=50  # 0.5
+
+# Initial momentum boost multiplier
+CONFIG_PMW3610_MOMENTUM_SCROLL_BOOST=150  # 1.5x
+
+# Maximum momentum duration (milliseconds)
+CONFIG_PMW3610_MOMENTUM_SCROLL_TIMEOUT_MS=2000
+
+# Smooth scroll division (higher = finer control)
+CONFIG_PMW3610_SMOOTH_SCROLL_DIVIDER=3
+```
+
+### Parameter Details
+
+- **MOMENTUM_SCROLL_FRICTION**: Controls momentum decay rate. 980 (0.98) provides smooth deceleration
+- **MOMENTUM_SCROLL_MIN_VELOCITY**: Momentum stops when velocity drops below this threshold
+- **MOMENTUM_SCROLL_BOOST**: Multiplier applied to initial momentum. 1.5x feels natural
+- **MOMENTUM_SCROLL_TIMEOUT_MS**: Safety timeout for momentum scrolling (2 seconds recommended)
+- **SMOOTH_SCROLL_DIVIDER**: Controls scroll granularity. 3 provides optimal balance
+
+### Usage
+
+1. Enable Mac Mouse Fix style scrolling in your configuration
+2. Use trackball movement in scroll layers
+3. Movement will continue with momentum after stopping input
+4. Momentum strength adapts automatically based on input speed
+
+### Comparison with Standard Scrolling
+
+| Feature       | Standard Mode   | Mac Mouse Fix Style |
+| ------------- | --------------- | ------------------- |
+| Scroll Feel   | Digital/stepped | Smooth and natural  |
+| Momentum      | None            | Yes                 |
+| Fine Control  | Low resolution  | High resolution     |
+| CPU Usage     | Low             | Slightly higher     |
+| Configuration | Simple          | Highly customizable |
+
+### Technical Implementation
+
+- 60 FPS momentum updates for smooth animation
+- Floating-point based accumulation for precision
+- Timer-based asynchronous processing
+- Velocity-based adaptive control
+
+This feature brings the smooth, natural scrolling experience of macOS Magic Mouse and Mac Mouse Fix software to trackball-equipped keyboards.
