@@ -38,6 +38,19 @@ struct pixart_data {
     int64_t last_scroll_time;
 #endif
 
+#ifdef CONFIG_PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+    // Mac Mouse Fix style scrolling fields
+    float momentum_velocity_x;
+    float momentum_velocity_y;
+    int64_t momentum_last_time;
+    bool momentum_active;
+    struct k_timer momentum_timer;
+    struct k_work momentum_work;
+    float accumulated_scroll_x;
+    float accumulated_scroll_y;
+    int64_t last_input_time;
+#endif
+
     // motion interrupt isr
     struct gpio_callback irq_gpio_cb;
     // the work structure holding the trigger job

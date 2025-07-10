@@ -30,6 +30,17 @@
 #include <math.h>
 LOG_MODULE_REGISTER(pmw3610, CONFIG_INPUT_LOG_LEVEL);
 
+#ifdef CONFIG_PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+// Mac Mouse Fix style scrolling function declarations
+static void momentum_scroll_timer_callback(struct k_timer *timer);
+static void momentum_scroll_work_handler(struct k_work *work);
+static void calculate_mac_mouse_fix_scroll(const struct device *dev, int16_t x, int16_t y, 
+                                          struct pixart_data *data);
+static void process_momentum_scroll(const struct device *dev, struct pixart_data *data);
+static void start_momentum_scroll(const struct device *dev, struct pixart_data *data, 
+                                 float velocity_x, float velocity_y);
+static void stop_momentum_scroll(struct pixart_data *data);
+#endif
 
 //////// Sensor initialization steps definition //////////
 // init is done in non-blocking manner (i.e., async), a //
@@ -626,6 +637,162 @@ static inline void calculate_scroll_acceleration(int16_t x, int16_t y, struct pi
     #endif
 }
 
+#ifdef CONFIG_PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+// Mac Mouse Fix style momentum scrolling implementation
+
+static void momentum_scroll_timer_callback(struct k_timer *timer) {
+    struct pixart_data *data = CONTAINER_OF(timer, struct pixart_data, momentum_timer);
+    k_work_submit(&data->momentum_work);
+}
+
+static void momentum_scroll_work_handler(struct k_work *work) {
+    struct pixart_data *data = CONTAINER_OF(work, struct pixart_data, momentum_work);
+    const struct device *dev = data->dev;
+    
+    if (!data->momentum_active) {
+        return;
+    }
+    
+    process_momentum_scroll(dev, data);
+}
+
+static void calculate_mac_mouse_fix_scroll(const struct device *dev, int16_t x, int16_t y, 
+                                          struct pixart_data *data) {
+    int64_t current_time = k_uptime_get();
+    int64_t delta_time = data->last_input_time > 0 ? 
+                        current_time - data->last_input_time : 16; // 16ms fallback
+    
+    if (delta_time <= 0) {
+        delta_time = 16;
+    }
+    
+    // Calculate velocity (pixels per second)
+    float velocity_x = (float)x / ((float)delta_time / 1000.0f);
+    float velocity_y = (float)y / ((float)delta_time / 1000.0f);
+    
+    // Apply smooth scroll divider for finer control
+    float smooth_x = (float)x / (float)CONFIG_PMW3610_SMOOTH_SCROLL_DIVIDER;
+    float smooth_y = (float)y / (float)CONFIG_PMW3610_SMOOTH_SCROLL_DIVIDER;
+    
+    // Accumulate fractional scrolling
+    data->accumulated_scroll_x += smooth_x;
+    data->accumulated_scroll_y += smooth_y;
+    
+    // Process accumulated scroll events
+    while (fabsf(data->accumulated_scroll_x) >= 1.0f) {
+        int scroll_dir = data->accumulated_scroll_x > 0 ? 1 : -1;
+        input_report_rel(dev, INPUT_REL_HWHEEL, 
+                        scroll_dir > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE,
+                        false, K_MSEC(5));
+        data->accumulated_scroll_x -= scroll_dir;
+    }
+    
+    while (fabsf(data->accumulated_scroll_y) >= 1.0f) {
+        int scroll_dir = data->accumulated_scroll_y > 0 ? 1 : -1;
+        input_report_rel(dev, INPUT_REL_WHEEL,
+                        scroll_dir > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE,
+                        false, K_MSEC(5));
+        data->accumulated_scroll_y -= scroll_dir;
+    }
+    
+    // Start momentum scrolling if velocity is sufficient
+    float min_velocity = (float)CONFIG_PMW3610_MOMENTUM_SCROLL_MIN_VELOCITY / 100.0f;
+    float velocity_magnitude = sqrtf(velocity_x * velocity_x + velocity_y * velocity_y);
+    
+    if (velocity_magnitude > min_velocity) {
+        float boost = (float)CONFIG_PMW3610_MOMENTUM_SCROLL_BOOST / 100.0f;
+        start_momentum_scroll(dev, data, velocity_x * boost, velocity_y * boost);
+    }
+    
+    data->last_input_time = current_time;
+}
+
+static void process_momentum_scroll(const struct device *dev, struct pixart_data *data) {
+    if (!data->momentum_active) {
+        return;
+    }
+    
+    int64_t current_time = k_uptime_get();
+    int64_t delta_time = current_time - data->momentum_last_time;
+    
+    if (delta_time <= 0) {
+        return;
+    }
+    
+    // Apply friction
+    float friction = (float)CONFIG_PMW3610_MOMENTUM_SCROLL_FRICTION / 1000.0f;
+    data->momentum_velocity_x *= friction;
+    data->momentum_velocity_y *= friction;
+    
+    // Calculate scroll delta for this frame
+    float time_factor = (float)delta_time / 1000.0f; // Convert to seconds
+    float scroll_x = data->momentum_velocity_x * time_factor;
+    float scroll_y = data->momentum_velocity_y * time_factor;
+    
+    // Accumulate fractional scrolling
+    data->accumulated_scroll_x += scroll_x;
+    data->accumulated_scroll_y += scroll_y;
+    
+    // Process accumulated scroll events
+    bool scroll_occurred = false;
+    while (fabsf(data->accumulated_scroll_x) >= 1.0f) {
+        int scroll_dir = data->accumulated_scroll_x > 0 ? 1 : -1;
+        input_report_rel(dev, INPUT_REL_HWHEEL, 
+                        scroll_dir > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE,
+                        false, K_MSEC(5));
+        data->accumulated_scroll_x -= scroll_dir;
+        scroll_occurred = true;
+    }
+    
+    while (fabsf(data->accumulated_scroll_y) >= 1.0f) {
+        int scroll_dir = data->accumulated_scroll_y > 0 ? 1 : -1;
+        input_report_rel(dev, INPUT_REL_WHEEL,
+                        scroll_dir > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE,
+                        false, K_MSEC(5));
+        data->accumulated_scroll_y -= scroll_dir;
+        scroll_occurred = true;
+    }
+    
+    // Check if momentum should continue
+    float min_velocity = (float)CONFIG_PMW3610_MOMENTUM_SCROLL_MIN_VELOCITY / 100.0f;
+    float velocity_magnitude = sqrtf(data->momentum_velocity_x * data->momentum_velocity_x + 
+                                   data->momentum_velocity_y * data->momentum_velocity_y);
+    
+    int64_t total_time = current_time - data->momentum_last_time;
+    
+    if (velocity_magnitude < min_velocity || 
+        total_time > CONFIG_PMW3610_MOMENTUM_SCROLL_TIMEOUT_MS) {
+        stop_momentum_scroll(data);
+        return;
+    }
+    
+    data->momentum_last_time = current_time;
+    
+    // Schedule next momentum update
+    k_timer_start(&data->momentum_timer, K_MSEC(16), K_NO_WAIT); // ~60 FPS
+}
+
+static void start_momentum_scroll(const struct device *dev, struct pixart_data *data, 
+                                 float velocity_x, float velocity_y) {
+    stop_momentum_scroll(data); // Stop any existing momentum
+    
+    data->momentum_velocity_x = velocity_x;
+    data->momentum_velocity_y = velocity_y;
+    data->momentum_last_time = k_uptime_get();
+    data->momentum_active = true;
+    
+    // Start the momentum timer
+    k_timer_start(&data->momentum_timer, K_MSEC(16), K_NO_WAIT);
+}
+
+static void stop_momentum_scroll(struct pixart_data *data) {
+    data->momentum_active = false;
+    k_timer_stop(&data->momentum_timer);
+    data->momentum_velocity_x = 0.0f;
+    data->momentum_velocity_y = 0.0f;
+}
+#endif
+
 static inline void process_scroll_events(const struct device *dev, struct pixart_data *data,
                                         int32_t delta, bool is_horizontal) {
     if (abs(delta) > CONFIG_PMW3610_SCROLL_TICK) {
@@ -884,6 +1051,11 @@ static int pmw3610_report_data(const struct device *dev) {
             input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
             input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
         } else if (input_mode == SCROLL) {
+#ifdef CONFIG_PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+            // Mac Mouse Fix style smooth scrolling
+            calculate_mac_mouse_fix_scroll(dev, x, y, data);
+#else
+            // Standard scroll mode
             int32_t accel_x, accel_y;
             calculate_scroll_acceleration(x, y, data, &accel_x, &accel_y);
             
@@ -892,6 +1064,7 @@ static int pmw3610_report_data(const struct device *dev) {
             
             process_scroll_events(dev, data, data->scroll_delta_y, false);
             process_scroll_events(dev, data, data->scroll_delta_x, true);
+#endif
         } else if (input_mode == BALL_ACTION) {
             data->ball_action_delta_x += x;
             data->ball_action_delta_y += y;
@@ -1001,6 +1174,21 @@ static int pmw3610_init(const struct device *dev) {
 
     // init trigger handler work
     k_work_init(&data->trigger_work, pmw3610_work_callback);
+
+#ifdef CONFIG_PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+    // Initialize Mac Mouse Fix style scrolling
+    data->momentum_velocity_x = 0.0f;
+    data->momentum_velocity_y = 0.0f;
+    data->momentum_last_time = 0;
+    data->momentum_active = false;
+    data->accumulated_scroll_x = 0.0f;
+    data->accumulated_scroll_y = 0.0f;
+    data->last_input_time = 0;
+    
+    // Initialize momentum timer and work
+    k_timer_init(&data->momentum_timer, momentum_scroll_timer_callback, NULL);
+    k_work_init(&data->momentum_work, momentum_scroll_work_handler);
+#endif
 
     // check readiness of cs gpio pin and init it to inactive
     if (!device_is_ready(config->cs_gpio.port)) {

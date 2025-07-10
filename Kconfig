@@ -260,6 +260,66 @@ config PMW3610_SCROLL_ACCELERATION_SENSITIVITY
     help
       Scrolling acceleration sensitivity. Higher values make scrolling more responsive with stronger acceleration.
 
+choice
+    prompt "Select PMW3610 scroll mode"
+    default PMW3610_SCROLL_MODE_STANDARD
+
+config PMW3610_SCROLL_MODE_STANDARD
+    bool "Standard scroll mode"
+    help
+      Use the standard scroll algorithm.
+
+config PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+    bool "Mac Mouse Fix style scroll mode"
+    help
+      Use Mac Mouse Fix style smooth scrolling with momentum and deceleration.
+
+endchoice
+
+config PMW3610_MOMENTUM_SCROLL_FRICTION
+    int "Momentum scroll friction factor (x1000, e.g. 980 for 0.98)"
+    default 980
+    range 800 999
+    depends on PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+    help
+      Friction factor for momentum scrolling. Lower values create more friction (shorter scrolling).
+      Specify as integer x1000 (e.g. 980 for 0.98 friction factor).
+
+config PMW3610_MOMENTUM_SCROLL_MIN_VELOCITY
+    int "Minimum velocity for momentum scroll (x100)"
+    default 50
+    range 10 200
+    depends on PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+    help
+      Minimum velocity below which momentum scrolling stops.
+      Specify as integer x100 (e.g. 50 for 0.5 velocity).
+
+config PMW3610_MOMENTUM_SCROLL_BOOST
+    int "Initial momentum boost factor (x100, e.g. 150 for 1.5x)"
+    default 150
+    range 100 300
+    depends on PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+    help
+      Initial boost factor applied to scroll velocity for momentum.
+      Specify as integer x100 (e.g. 150 for 1.5x boost).
+
+config PMW3610_MOMENTUM_SCROLL_TIMEOUT_MS
+    int "Maximum momentum scroll duration (ms)"
+    default 2000
+    range 500 5000
+    depends on PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+    help
+      Maximum time momentum scrolling can continue.
+
+config PMW3610_SMOOTH_SCROLL_DIVIDER
+    int "Smooth scroll divider for finer control"
+    default 3
+    range 1 10
+    depends on PMW3610_SCROLL_MODE_MAC_MOUSE_FIX
+    help
+      Divider for scroll delta to create smoother scrolling.
+      Higher values create finer scroll steps.
+
 module = PMW3610
 module-str = PMW3610
 source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
